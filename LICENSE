@@ -1,4 +1,4 @@
-BSD 3-Clause License
+BSD 3-Clause License-Carnations (Modified for Clause Inclusion by Carnations Botanica)
 
 Copyright (c) 2025, Carnations Botánica
 
@@ -6,15 +6,38 @@ Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
 
 1. Redistributions of source code must retain the above copyright notice, this
-   list of conditions and the following disclaimer.
+   list of conditions, the headers and comments within the source code and the following disclaimer.
 
 2. Redistributions in binary form must reproduce the above copyright notice,
-   this list of conditions and the following disclaimer in the documentation
-   and/or other materials provided with the distribution.
+   this list of conditions, even to those who cannot see the headers and the following disclaimer in
+   the documentation and/or other materials provided with the distribution.
 
 3. Neither the name of the copyright holder nor the names of its
    contributors may be used to endorse or promote products derived from
-   this software without specific prior written permission.
+   this software without specific prior written permission. To be able to create your own 'derived product'
+   you must heavily modify the base source material enough to where it is no longer considered 'Carnations-like'
+
+4. You, the user are allowed these terms, in addition to the usage of the binary form of this project as long as the following is agreed to.
+   When acquiring a download of the binary form of this project, you are subject to the same headers and restrictions that are only visible
+   in the source code form. This includes the following headers:
+
+	'EXPRESSED PERMISSIONS Header'
+   'Do NOT include Phantom in your EFIs and share them.
+    Do NOT redistribute Phantom in binary form.
+    In any way, shape, or form. All users must source Phantom on their own, and apply the kernel extension with ProperTree manually.
+    If you are found to contain Phantom within your repository which provides an OpenCore EFI, you are subject to a DMCA request for violating
+    this incredibly clear warning and demonstration that we do not condone bypassing these efforts to limit the kind of users who can use Phantom.
+	
+    For contributors, you can freely fork and work on improving Phantom without worry and with CI enabled. This header is still not
+    allowed for modification, even on forks with CI enabled, which allow for circumventing this header by providing an alternative
+    binary without said header. Again, your repository *will* be DMCA'd. You have been expressed no permission multiple times, and
+    we are allowed to protect our work as we see fit. Thank you for understanding and agreeing to these terms if you are using Phantom in any way,
+    shape or form, as per assumptions that you, are not Carnations Botanica, or CarnationsInternal. These clauses apply ontop of the LICENSE seen.'
+
+    Your continued usage of the binary form, is a form of agreement to the above headers in the source code, even if you cannot see them in the binary.
+
+5. A user, is defined as any outside or third-party member other than Carnations Botanica or its internal contributors.
+   A user can both be a user of the source material, and a user of the binary form. The clause defines CarnationsInternal vs Users who these above clauses apply to.
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
