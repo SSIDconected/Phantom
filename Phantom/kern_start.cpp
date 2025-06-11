@@ -19,7 +19,7 @@ PHTM *PHTM::callbackPHTM;
 mach_vm_address_t PHTM::gSysctlChildrenAddr = 0;
 
 // To only be modified by CarnationsInternal, to display various Internal logs and headers
-const bool PHTM::IS_INTERNAL = true; // MUST CHANCE THIS TO FALSE BEFORE CREATING COMMITS
+const bool PHTM::IS_INTERNAL = false; // MUST CHANCE THIS TO FALSE BEFORE CREATING COMMITS
 
 // Function to get _sysctl__children memory address
 mach_vm_address_t PHTM::sysctlChildrenAddr(KernelPatcher &patcher) {
