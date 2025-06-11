@@ -72,7 +72,7 @@ void PHTM::solveSysCtlChildrenAddr(void *user __unused, KernelPatcher &Patcher) 
     KMP::init(Patcher);
 	
     DBGLOG(MODULE_INIT, "Initializing SLP module.");
-    SLP::init(Patcher);
+	SLP::init(Patcher);
 	
 	DBGLOG(MODULE_INIT, "Initializing IOR module.");
 	IOR::init(Patcher);
@@ -157,9 +157,9 @@ const char *bootargBeta[] {
 PluginConfiguration ADDPR(config) {
     xStringify(PRODUCT_NAME),
     parseModuleVersion(xStringify(MODULE_VERSION)),
-    LiluAPI::AllowNormal,
-    // LiluAPI::AllowSafeMode |
-    // LiluAPI::AllowInstallerRecovery, // I got tired of restarting all the way to Linux, this breaks OTA updates
+    LiluAPI::AllowNormal |
+    LiluAPI::AllowSafeMode |
+    LiluAPI::AllowInstallerRecovery,
     bootargOff,
     arrsize(bootargOff),
     bootargDebug,
@@ -167,7 +167,7 @@ PluginConfiguration ADDPR(config) {
     bootargBeta,
     arrsize(bootargBeta),
 	KernelVersion::HighSierra, // this is for testing, only seq is officially known to work
-    KernelVersion::Sequoia,
+	KernelVersion::Sequoia,
     []() {
         
         // Start the main PHTM routine

@@ -19,9 +19,10 @@ sysctl_handler_t VMM::originalHvVmmHandler = nullptr;
  * The pid is not used in this check, so it can be left as 0.
  */
 const PHTM::DetectedProcess VMM::filteredProcs[] = {
-    { "softwareupdated", 0 },
-    { "com.apple.Mobile", 0 },
-    { "osinstallersetup", 0 }
+	{"SoftwareUpdateNo", -1},
+    {"softwareupdated", -1},
+    {"com.apple.Mobile", -1},
+    {"osinstallersetup", -1}
 };
 
 // Phantom's custom sysctl VMM present function
@@ -30,7 +31,7 @@ int phtm_sysctl_vmm_present(struct sysctl_oid *oidp, void *arg1, int arg2, struc
     // Retrieve the current process information
     proc_t currentProcess = current_proc();
     pid_t procPid = proc_pid(currentProcess);
-    char procName[MAX_PROC_NAME_LEN] = {0}; // Initialize buffer to zeros
+    char procName[MAX_PROC_NAME_LEN] = {0};
     proc_name(procPid, procName, sizeof(procName));
     
     // Default to 0 (VMM not present). This will be the value for any process NOT in our list.
@@ -58,7 +59,7 @@ int phtm_sysctl_vmm_present(struct sysctl_oid *oidp, void *arg1, int arg2, struc
         DBGLOG(MODULE_CVMM, "Process '%s' (PID: %d) is NOT on the filter list. Reporting hv_vmm_present as %d.", procName, procPid, value_to_return);
     }
     
-    // Use the kernel macro to properly return the value to the calling process
+    // Use the kernel macro to properly return the value to the calling process, depending on our context
     return SYSCTL_OUT(req, &value_to_return, sizeof(value_to_return));
 }
 
@@ -113,12 +114,18 @@ bool reRouteHvVmm(KernelPatcher &patcher) {
         DBGLOG(MODULE_RRHVM, "Failed to save original 'hv_vmm_present' sysctl handler: The existing handler was NULL.");
         return false; // Return false as this is considered a failure condition.
     }
-
-    // Save the original handler in the VMM class static member, and reroute it
-    VMM::originalHvVmmHandler = vmmNode->oid_handler;
-    DBGLOG(MODULE_RRHVM, "Successfully saved original 'hv_vmm_present' sysctl handler (address: %p).", (void*)VMM::originalHvVmmHandler);
+	
+    // save the original handler in the global variable
+	VMM::originalHvVmmHandler = vmmNode->oid_handler;
+    DBGLOG(MODULE_RRHVM, "Successfully saved original 'hv_vmm_present' sysctl handler.");
+    
+    // ensure kernel r/w access
+    PANIC_COND(MachInfo::setKernelWriting(true, patcher.kernelWriteLock) != KERN_SUCCESS, MODULE_SHORT, "Failed to enable God mode. (Kernel R/W)");
+    
+    // reroute the handler to our custom function
     vmmNode->oid_handler = phtm_sysctl_vmm_present;
-    DBGLOG(MODULE_RRHVM, "Successfully rerouted 'hv_vmm_present' sysctl handler to 'phtm_sysctl_vmm_present' function.");
+    MachInfo::setKernelWriting(false, patcher.kernelWriteLock);
+    DBGLOG(MODULE_RRHVM, "Successfully rerouted 'hv_vmm_present' sysctl handler.");
     return true;
 
 }
@@ -131,6 +138,7 @@ void VMM::init(KernelPatcher &Patcher) {
 	
 	if (!PHTM::gSysctlChildrenAddr) {
         DBGLOG(MODULE_ERROR, "PHTM::gSysctlChildrenAddr is not set. Cannot perform VMM rerouting.");
+		panic(MODULE_LONG, "PHTM::gSysctlChildrenAddr is not set.");
         return;
     }
 	

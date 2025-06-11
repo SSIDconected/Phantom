@@ -65,9 +65,13 @@ bool reRouteSecureLevel(KernelPatcher &patcher) {
 
 	SLP::originalSecureLevelHandler = securelevelNode->oid_handler;
     DBGLOG(MODULE_RRSL, "Successfully saved original 'securelevel' sysctl handler.");
+	
+	// ensure kernel r/w access
+	PANIC_COND(MachInfo::setKernelWriting(true, patcher.kernelWriteLock) != KERN_SUCCESS, MODULE_SHORT, "Failed to enable God mode. (Kernel R/W)");
     
     // Reroute the handler to our custom function
     securelevelNode->oid_handler = phtm_sysctl_securelevel;
+	MachInfo::setKernelWriting(false, patcher.kernelWriteLock);
     DBGLOG(MODULE_RRSL, "Successfully rerouted 'securelevel' sysctl handler.");
     return true;
 	
