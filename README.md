@@ -24,6 +24,24 @@ This kernel extension was developed specifically to circumvent various methods u
 This was created by a legitimate player who also has spent too much money on skins, check my account.
 
 </br>
+<h1 align="center">Support Chart</h1>
+</br>
+
+| Release Name | Status | Notes |
+| --- | --- | --- |
+| Tahoe (26+) | <span style="color: #a80000;">Incomplete</span> | Waiting on Lilu update. |
+| Sequoia (15+) | <span style="color: #7afc4e;">Complete</span> | All Modules work. |
+| Sonoma (14+) | <span style="color: #7afc4e;">Complete</span> | All Modules work. |
+| Ventura (13+) | <span style="color: #ffe985;">Work-In-Progress</span> | Untested. May Work. |
+| Monterey (12+) | <span style="color: #ffe985;">Work-In-Progress</span> | Untested. May Work. |
+| Big Sur (11+) | <span style="color: #ffe985;">Work-In-Progress</span> | Untested. May Work. |
+| Catalina (10.15+) | <span style="color: #ffe985;">Work-In-Progress</span> | Untested. May Work. |
+| Mojave (10.14+) | <span style="color: #ffe985;">Work-In-Progress</span> | Untested. May Work. |
+| High Sierra (10.13+) | <span style="color: #a80000;">Incomplete</span> | Waiting on Internal Testing. |
+
+The currently Complete versions are the ones that we were able to internally test, and will continue to update this kernel extension in the upcoming following days, to ensure all versions of macOS that League of Legends can run on, is supported. Give us time to make sure things work internally first. If you'd like to help, please read further below and create an Issue with your testing environment and logs. Thanks for the patience.
+
+</br>
 <h1 align="center">Financial Support</h1>
 </br>
 
@@ -37,7 +55,7 @@ If you would like to be kind, and donate so that development can continue smooth
 1. [PayPal](https://paypal.me/RoyalGX0)
 1. [Ko-Fi](https://ko-fi.com/royalgraphx)
 
-Tipping/Donating is not required, but will greatly assist me with day to day life, including but not limited to medical expenses, and monthly bills.
+Tipping/Donating is not required, but will greatly assist me with day to day life, including but not limited to medical expenses, and monthly bills. Look, no one enjoys "begging for money" but this genuinely took a lot of my personal free time away, when I wasn't at work, to create and test alone since MVG was enabled.
 
 </br>
 <h1 align="center">Usage / Features</h1>
