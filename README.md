@@ -3,6 +3,9 @@
 <h5 align="center">Danny is that you?</h5>
 </br>
 
+> [!CAUTION]
+> This kernel extension has a LICENSE that prohibits its inclusion in any form of prebuilt EFIs and redistribution outside of this official repository. Read the LICENSE carefully, before you decide to make a decision that can lead to a DMCA of your repository, whatever it may be. You are granted access to Phantom through this official repository **only**.
+
 <img src="assets/LeagueLauncher.png" alt="League Launcher after 15+ minutes"/>
 
 <img src="assets/LeagueClientBrawl.png" alt="League Client during a Match of Brawl."/>
