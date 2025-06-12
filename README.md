@@ -91,6 +91,9 @@ Phantom will automatically reroute various kernel functions to our own custom fu
 
 ### Debugging, Bug Reporting, Contributing to Filter.
 
+> [!CAUTION]
+> Before creating issues or attempting to report bugs, or that the kernel extension is not working, please ensure the kext is even loaded to begin with! You can verify with ``kextstat``. If you do not see Phantom in there, you are NOT using Phantom and WILL error out.
+
 If you find that you're running into issues that must be reported, or wish to contribute to the list of processes that should not be aware of being in an OpenCore-style environment you can follow the below information to better provide logs for us to improve the project with. Report these to the DarwinKVM discord server for now.
 
 </br>
