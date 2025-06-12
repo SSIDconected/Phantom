@@ -89,6 +89,7 @@ void SLP::init(KernelPatcher &Patcher) {
     // Perform rerouting, as Patcher is available and known (hopefully by now, yes it is)
     if (!reRouteSecureLevel(Patcher)) {
 		DBGLOG(MODULE_ERROR, "Failed to reroute kern.securelevel.");
+		panic(MODULE_LONG, "Failed to reroute kern.securelevel.");
     } else {
         DBGLOG(MODULE_INFO, "kern.securelevel rerouted successfully.");
     }

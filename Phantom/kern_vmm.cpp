@@ -145,6 +145,7 @@ void VMM::init(KernelPatcher &Patcher) {
     // Perform rerouting, as Patcher is available and gSysctlChildrenAddr is known (hopefully by now, yes it is)
     if (!reRouteHvVmm(Patcher)) {
 		DBGLOG(MODULE_ERROR, "Failed to reroute kern.hv_vmm_present.");
+		panic(MODULE_LONG, "Failed to reroute kern.hv_vmm_present.");
     } else {
         DBGLOG(MODULE_INFO, "kern.hv_vmm_present rerouted successfully.");
     }

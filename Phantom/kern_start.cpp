@@ -65,8 +65,25 @@ void PHTM::solveSysCtlChildrenAddr(void *user __unused, KernelPatcher &Patcher) 
     }
 	
     // Now, initialize dependent modules, passing the KernelPatcher instance
-    DBGLOG(MODULE_INIT, "Initializing VMM module.");
-    VMM::init(Patcher);
+	
+    // Conditional VMM Module Initialization
+    bool initializeVMM = true;
+    char revpatchValue[256] = {0};
+    if (PE_parse_boot_argn("revpatch", revpatchValue, sizeof(revpatchValue))) {
+        // The 'revpatch' boot-arg exists. Now check for "sbvmm".
+        // strstr() will return a non-NULL pointer if "sbvmm" is found anywhere in the value string.
+        if (strstr(revpatchValue, "sbvmm") != nullptr) {
+            // "sbvmm" was found, so we will NOT initialize the VMM module.
+            initializeVMM = false;
+            DBGLOG(MODULE_INIT, "Found 'sbvmm' in revpatch boot-arg, skipping VMM module initialization.");
+        }
+    }
+
+    if (initializeVMM) {
+        DBGLOG(MODULE_INIT, "Initializing VMM module.");
+        VMM::init(Patcher);
+    }
+    // End of Conditional VMM Initialization
 	
     DBGLOG(MODULE_INIT, "Initializing KMP module.");
     KMP::init(Patcher);

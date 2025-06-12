@@ -148,6 +148,7 @@ void KMP::init(KernelPatcher &Patcher) {
     // Perform rerouting, as Patcher is available and known (hopefully by now, yes it is)
     if (!reRouteCopyLoadedKextInfo(Patcher)) {
 		DBGLOG(MODULE_ERROR, "Failed to reroute copyLoadedKextInfo.");
+		panic(MODULE_LONG, "Failed to reroute copyLoadedKextInfo.");
     } else {
         DBGLOG(MODULE_INFO, "copyLoadedKextInfo rerouted successfully.");
     }
