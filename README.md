@@ -68,6 +68,11 @@ Tipping/Donating is not required, but will greatly assist me with day to day lif
 
 **To use Phantom, you must be using [the latest version of Lilu](https://github.com/acidanthera/Lilu/releases) (atleast 1.7.0+ required) to properly load the plug-in.**
 
+1. Download the latest RELEASE or DEBUG from the Releases tab.
+2. Drag/Drop into your OpenCore's Kexts folder.
+3. Use ProperTree to OC Snapshot and add the kext to your config.plist
+4. Boot macOS, verify the kernel extension is loaded with ``kextstat``.
+
 ### Features
 
 Phantom will automatically reroute various kernel functions to our own custom functions, that will process the currently asking PID for context about its requests. If the process is found to be in our known filters, we act accordingly and provide sanatized data to the requesting processes.
