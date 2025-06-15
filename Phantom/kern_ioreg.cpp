@@ -17,12 +17,10 @@ static IOR::_IOService_getMatchingService_t original_IOService_getMatchingServic
 
 // Module-specific Filtered Process List
 const PHTM::DetectedProcess IOR::filteredProcs[] = {
-    { "Terminal", 0 },
-    { "ioreg", 0 },
-    { "LeagueClient", 0 },
-    { "LeagueofLegends", 0 },
-    { "LeagueClientUx H", 0 },
-    { "RiotClientServic", 0 }
+    {"LeagueClient", 0},
+    {"LeagueofLegends", 0},
+    {"LeagueClientUx H", 0},
+    {"RiotClientServic", 0}
 };
 
 // List of IORegistry class names to hide from the filtered processes.
@@ -46,117 +44,12 @@ static bool isProcFiltered(const char *procName) {
     return false;
 }
 
-// Helper to check if a class name should be filtered
-static bool isClassFiltered(const char *className) {
-    if (!className) {
-        return false;
-    }
-    const size_t num_filtered = sizeof(IOR::filteredClasses) / sizeof(IOR::filteredClasses[0]);
-    for (size_t i = 0; i < num_filtered; ++i) {
-        if (strcmp(className, IOR::filteredClasses[i]) == 0) {
-            return true;
-        }
-    }
-    return false;
-}
-
-// Sanitizes the results of service matching requests.
-OSIterator *phtm_IOService_getMatchingServices(OSDictionary *matching) {
-    proc_t p = current_proc();
-    pid_t pid = proc_pid(p);
-    char procName[MAX_PROC_NAME_LEN];
-    proc_name(pid, procName, sizeof(procName));
-
-    // First, get the real iterator by calling the original function
-    OSIterator *original_iterator = nullptr;
-    if (original_IOService_getMatchingServices) {
-        original_iterator = original_IOService_getMatchingServices(matching);
-    }
-
-    // If the process is not in our filter list, or if the original call failed,
-    // return the original iterator immediately.
-    if (!isProcFiltered(procName) || !original_iterator) {
-        return original_iterator;
-    }
-
-    DBGLOG(MODULE_IOR, "Filtering getMatchingServices result for '%s' (PID: %d)", procName, pid);
-
-    // Create a new array to hold the services we are NOT filtering out.
-    OSArray *filtered_array = OSArray::withCapacity(16);
-    if (!filtered_array) {
-        DBGLOG(MODULE_ERROR, "Failed to allocate OSArray for filtering.");
-        return original_iterator; // Return original on allocation failure
-    }
-
-    OSObject *object;
-    while ((object = original_iterator->getNextObject())) {
-        // We need to cast the object to IORegistryEntry to get its class name
-        IORegistryEntry *entry = OSDynamicCast(IORegistryEntry, object);
-        if (entry) {
-            const char *className = entry->getMetaClass()->getClassName();
-            
-            // If the class name is NOT in our blocklist, add it to our results.
-            if (!isClassFiltered(className)) {
-                filtered_array->setObject(entry);
-            } else {
-                DBGLOG(MODULE_IOR, "Hiding class '%s' from process '%s'", className, procName);
-            }
-        }
-    }
-    
-    // Release the original iterator, we are done with it.
-    original_iterator->release();
-
-    // Create a new iterator from our sanitized array.
-	OSIterator *filtered_iterator = OSCollectionIterator::withCollection(filtered_array);
-    
-    // Release the array, the iterator now holds a reference to it.
-    filtered_array->release();
-    
-    return filtered_iterator;
-}
-
-// Custom getMatchingService (Singular)
-IOService *phtm_IOService_getMatchingService(OSDictionary *matching, IOService *from) {
-    // First, get the real service by calling the original function
-    IOService *original_service = nullptr;
-    if (original_IOService_getMatchingService) {
-        original_service = original_IOService_getMatchingService(matching, from);
-    }
-
-    // If the original call found nothing, just return.
-    if (!original_service) {
-        return nullptr;
-    }
-    
-    proc_t p = current_proc();
-    pid_t pid = proc_pid(p);
-    char procName[MAX_PROC_NAME_LEN];
-    proc_name(pid, procName, sizeof(procName));
-
-    // If the process is one we are targeting and a service was found...
-    if (isProcFiltered(procName)) {
-        const char *className = original_service->getMetaClass()->getClassName();
-        
-        // Check if the returned service's class is on our blocklist.
-        if (isClassFiltered(className)) {
-            DBGLOG(MODULE_IOR, "Hiding single service of class '%s' from process '%s'", className, procName);
-            // The service was found, but we are hiding it. We must release it
-            // to prevent a memory leak and return nullptr.
-            original_service->release();
-            return nullptr;
-        }
-    }
-    
-    // Otherwise, return the service that was found.
-    return original_service;
-}
-
 // Forward declaration for our main hook
 OSObject *phtm_IORegistryEntry_getProperty_os_symbol(const IORegistryEntry *that, const OSSymbol *aKey);
 
 // This is the new hook for the getProperty(const char*) variant.
 OSObject *phtm_IORegistryEntry_getProperty_cstring(const IORegistryEntry *that, const char *aKey) {
+	
     const OSSymbol *symbolKey = OSSymbol::withCString(aKey);
     OSObject *result = phtm_IORegistryEntry_getProperty_os_symbol(that, symbolKey);
     
@@ -164,11 +57,12 @@ OSObject *phtm_IORegistryEntry_getProperty_cstring(const IORegistryEntry *that, 
         const_cast<OSSymbol *>(symbolKey)->release();
     }
     return result;
+	
 }
 
 // This is our main, updated hook for getProperty(const OSSymbol*).
 OSObject *phtm_IORegistryEntry_getProperty_os_symbol(const IORegistryEntry *that, const OSSymbol *aKey) {
-	
+    
     // Always call the original function first to get the real property.
     OSObject* original_property = nullptr;
     if (original_IORegistryEntry_getProperty_os_symbol) {
@@ -180,149 +74,94 @@ OSObject *phtm_IORegistryEntry_getProperty_os_symbol(const IORegistryEntry *that
     char procName[MAX_PROC_NAME_LEN];
     proc_name(pid, procName, sizeof(procName));
 
-    // Check if the process is one we want to target using our new helper function.
+    // Check if the process is one we want to target.
     if (isProcFiltered(procName))
     {
         const char *keyName = aKey->getCStringNoCopy();
 
-        // If the key is "manufacturer", spoof it regardless of the class.
+        // If the key is "manufacturer", spoof it.
         if (keyName && strcmp(keyName, "manufacturer") == 0)
         {
             const char* entryClassName = that->getMetaClass()->getClassName();
-            DBGLOG(MODULE_IOR, "'manufacturer' key on class '%s' called by '%s (PID: %d). Returning 'Apple Inc.'.",
-                   entryClassName, procName, pid);
+            const char* spoofedValue = "Apple Inc.";
             
-            // Return our new, spoofed OSString.
-            return OSString::withCString("Apple Inc.");
-        }
-        else // If its not manufact, then lets go ahead and log what was being asked and what was returned
-        {
-            const char* entryClassName = that->getMetaClass()->getClassName();
-            OSString* str_prop = OSDynamicCast(OSString, original_property);
-            OSData* data_prop = OSDynamicCast(OSData, original_property);
+            // Create a buffer to hold the original value.
+            char originalValue[128];
 
-            if (str_prop) {
-                 DBGLOG(MODULE_IOR, "getProperty called by '%s' (PID: %d) on class '%s' for key '%s' returned OSString: '%s'",
-                       procName, pid, entryClassName, keyName, str_prop->getCStringNoCopy());
-            } else if (data_prop) {
-                 // Often, strings are stored in OSData. We can try to print it if it's null-terminated.
-                 DBGLOG(MODULE_IOR, "getProperty called by '%s' (PID: %d) on class '%s' for key '%s' returned OSData: '%.*s' (size: %d)",
-                       procName, pid, entryClassName, keyName, (int)data_prop->getLength(), (const char*)data_prop->getBytesNoCopy(), data_prop->getLength());
+            // Populate originalValue with a useful description
+            if (original_property) {
+                OSString* str_prop = OSDynamicCast(OSString, original_property);
+                OSData* data_prop = OSDynamicCast(OSData, original_property);
+                OSNumber* num_prop = OSDynamicCast(OSNumber, original_property);
+
+                if (data_prop) {
+                    snprintf(originalValue, sizeof(originalValue), "'%.*s'", (int)data_prop->getLength(), static_cast<const char*>(data_prop->getBytesNoCopy()));
+                } else if (str_prop) {
+                    snprintf(originalValue, sizeof(originalValue), "'%s'", str_prop->getCStringNoCopy());
+                } else if (num_prop) {
+                    snprintf(originalValue, sizeof(originalValue), "Number(%llu)", num_prop->unsigned64BitValue());
+                } else {
+                    // Fallback for any other type
+                    snprintf(originalValue, sizeof(originalValue), "Object<%s>", original_property->getMetaClass()->getClassName());
+                }
             } else {
-                 DBGLOG(MODULE_IOR, "getProperty called by '%s' (PID: %d) on class '%s' for key '%s' returned object of class '%s'",
-                       procName, pid, entryClassName, keyName,
-                       original_property ? original_property->getMetaClass()->getClassName() : "nullptr");
-            }
+                strlcpy(originalValue, "nullptr", sizeof(originalValue));
+			}
+            
+            // Now, log the complete before-and-after picture with the correct original value.
+            DBGLOG(MODULE_IOR, "'%s' (PID: %d) on class '%s' is spoofing 'manufacturer'. Was: %s -> Now: '%s'",
+                   procName, pid, entryClassName, originalValue, spoofedValue);
+                   
+            return OSString::withCString(spoofedValue);
         }
     }
 
-    // For all other cases, just return the original property without logging.
+    // For all other cases, just return the original property.
     return original_property;
-}
-
-// Logs only for specified processes with more detail.
-const char *phtm_IORegistryEntry_getName(const IORegistryEntry *that, const IORegistryPlane *plane) {
-    const char *entryName = nullptr;
-    if (original_IORegistryEntry_getName) {
-        entryName = original_IORegistryEntry_getName(that, plane);
-    }
-
-    proc_t p = current_proc();
-    pid_t pid = proc_pid(p);
-    char procName[MAX_PROC_NAME_LEN];
-    proc_name(pid, procName, sizeof(procName));
-
-    // Only log if the process name matches one on our allow list, using the helper.
-    if (isProcFiltered(procName))
-    {
-        // Get the class name for a more descriptive log message.
-        const char* entryClassName = that->getMetaClass()->getClassName();
-        DBGLOG(MODULE_IOR, "getName called by '%s' (PID: %d) on class '%s', returning name: '%s'",
-               procName,
-               pid,
-               entryClassName ? entryClassName : "Unknown",
-               entryName ? entryName : "Unknown");
-    }
-
-    return entryName;
-}
-
-// Custom getNextObject: Logs only for specified processes.
-OSObject *phtm_IOIterator_getNextObject(OSCollectionIterator *that) {
-    OSObject *obj = nullptr;
-    if (original_IOIterator_getNextObject) {
-        obj = original_IOIterator_getNextObject(that);
-    }
-
-    proc_t p = current_proc();
-    pid_t pid = proc_pid(p);
-    char procName[MAX_PROC_NAME_LEN];
-    proc_name(pid, procName, sizeof(procName));
-	
-    // Only log if the process name matches one on our allow list, using the helper.
-    if (isProcFiltered(procName))
-    {
-        DBGLOG(MODULE_IOR, "getNextObject called by '%s' (PID: %d) on an IOIterator, returning object of class '%s'",
-               procName,
-               pid,
-               obj ? obj->getMetaClass()->getClassName() : "nullptr");
-    }
-    
-    return obj;
-}
-
-// Generic rerouting function for simplicity
-static bool reRoute(KernelPatcher &patcher, const char *mangledName, mach_vm_address_t replacement, void **original) {
-    mach_vm_address_t address = patcher.solveSymbol(KernelPatcher::KernelID, mangledName);
-    if (address) {
-        DBGLOG(MODULE_RRIOR, "Resolved %s at 0x%llx", mangledName, address);
-        *original = reinterpret_cast<void*>(patcher.routeFunction(address, replacement, true));
-
-        if (patcher.getError() == KernelPatcher::Error::NoError && *original) {
-            DBGLOG(MODULE_RRIOR, "Successfully routed %s", mangledName);
-            return true;
-        } else {
-            DBGLOG(MODULE_ERROR, "Failed to route %s. Lilu error: %d", mangledName, patcher.getError());
-            patcher.clearError();
-        }
-    } else {
-        DBGLOG(MODULE_ERROR, "Failed to resolve symbol %s. Lilu error: %d", mangledName, patcher.getError());
-        patcher.clearError();
-    }
-    return false;
 }
 
 // IORegistry Module Initialization
 void IOR::init(KernelPatcher &Patcher) {
+    
     DBGLOG(MODULE_IOR, "IOR::init(Patcher) called. IORegistry module is starting.");
-    
-    // getMatchingServices to hide entries from the start
-    reRoute(Patcher, "__ZN9IOService19getMatchingServicesEP12OSDictionary",
-            reinterpret_cast<mach_vm_address_t>(phtm_IOService_getMatchingServices),
-            reinterpret_cast<void**>(&original_IOService_getMatchingServices));
-	
-    // getMatchingService (singular) to hide entries from direct lookups.
-    // The mangled name is for IOService::getMatchingService(OSDictionary*, IOService*)
-    reRoute(Patcher, "__ZN9IOService19getMatchingServiceEP12OSDictionaryP9IOService",
-            reinterpret_cast<mach_vm_address_t>(phtm_IOService_getMatchingService),
-            reinterpret_cast<void**>(&original_IOService_getMatchingService));
-	
-    // Reroute rest of the functions, Seq specific, it's 4am give me a break, ts free and oss
-    reRoute(Patcher, "__ZNK15IORegistryEntry11getPropertyEPK8OSSymbol",
-            reinterpret_cast<mach_vm_address_t>(phtm_IORegistryEntry_getProperty_os_symbol),
-            reinterpret_cast<void**>(&original_IORegistryEntry_getProperty_os_symbol));
-    
-    reRoute(Patcher, "__ZNK15IORegistryEntry11getPropertyEPKc",
-            reinterpret_cast<mach_vm_address_t>(phtm_IORegistryEntry_getProperty_cstring),
-            reinterpret_cast<void**>(&original_IORegistryEntry_getProperty_cstring));
-            
-    reRoute(Patcher, "__ZNK15IORegistryEntry7getNameEPK15IORegistryPlane",
-            reinterpret_cast<mach_vm_address_t>(phtm_IORegistryEntry_getName),
-            reinterpret_cast<void**>(&original_IORegistryEntry_getName));
 
-    reRoute(Patcher, "__ZN20OSCollectionIterator13getNextObjectEv",
-            reinterpret_cast<mach_vm_address_t>(phtm_IOIterator_getNextObject),
-            reinterpret_cast<void**>(&original_IOIterator_getNextObject));
-	
-    DBGLOG(MODULE_IOR, "IOR::init(Patcher) finished.");
+    // Route Requests for getProperty
+    KernelPatcher::RouteRequest requests[] = {
+        { "__ZNK15IORegistryEntry11getPropertyEPK8OSSymbol", phtm_IORegistryEntry_getProperty_os_symbol, original_IORegistryEntry_getProperty_os_symbol },
+        { "__ZNK15IORegistryEntry11getPropertyEPKc", phtm_IORegistryEntry_getProperty_cstring, original_IORegistryEntry_getProperty_cstring },
+    };
+
+    // By default, we only patch the first, most critical function.
+    // Perform Safety Checks Before Attempting to Patch Both.
+	size_t request_count = 1;
+    
+    // Resolve the addresses of BOTH functions first.
+    mach_vm_address_t addr_os_symbol = Patcher.solveSymbol(KernelPatcher::KernelID, requests[0].symbol);
+    mach_vm_address_t addr_cstring = Patcher.solveSymbol(KernelPatcher::KernelID, requests[1].symbol);
+
+    if (!addr_os_symbol || !addr_cstring) {
+        DBGLOG(MODULE_ERROR, "Could not resolve one or both getProperty variants.");
+        return;
+    }
+
+    // Calculate the distance between the two functions in memory.
+    const int64_t min_safe_distance = 32;
+    int64_t functions_distance = (addr_os_symbol > addr_cstring) ? (addr_os_symbol - addr_cstring) : (addr_cstring - addr_os_symbol);
+    DBGLOG(MODULE_IOR, "Distance between getProperty variants is %lld bytes.", functions_distance);
+    
+    // --- Decide Whether to Patch One or Both Functions ---
+    if (functions_distance < min_safe_distance) {
+		DBGLOG(MODULE_WARN, "getProperty variants are too close. Patching only one to avoid multiroute panic.");
+    } else {
+        DBGLOG(MODULE_IOR, "Conditions are safe to patch both getProperty variants.");
+        request_count = 2;
+    }
+
+    // Perform the reRouting
+    if (!Patcher.routeMultipleLong(KernelPatcher::KernelID, requests, request_count)) {
+        DBGLOG(MODULE_ERROR, "Failed to apply IORegistry patches.");
+        return;
+    }
+    
+    DBGLOG(MODULE_IOR, "IOR::init(Patcher) finished successfully.");
 }

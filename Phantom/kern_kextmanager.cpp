@@ -43,6 +43,17 @@ OSDictionary *phtm_OSKext_copyLoadedKextInfo(OSArray *kextIdentifiers, OSArray *
 			const char *filterSubstrings[] = {
 				"org.Carnations",
 				"org.acidanthera",
+				"ru.usrsse2",
+				"ru.joedm",
+				"com.dhinakg",
+				"com.zxystd",
+				"org.Chefkiss",
+				"com.github.whatdahopper",
+				"com.insanelymac",
+				"com.alexandred",
+				"org.coolstar",
+				"com.1Revenger1",
+				"me.kishorprins",
 				"as.vit9696",
 				"com.sn-labs"
 			};

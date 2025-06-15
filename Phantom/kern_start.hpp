@@ -11,6 +11,9 @@
 // Phantom Includes
 #include <Headers/plugin_start.hpp>
 #include <Headers/kern_patcher.hpp>
+#include <Headers/kern_nvram.hpp>
+#include <Headers/kern_devinfo.hpp>
+#include <Headers/kern_efi.hpp>
 #include <Headers/kern_api.hpp>
 #include <Headers/kern_util.hpp>
 #include <Headers/kern_mach.hpp>
@@ -54,6 +57,13 @@ public:
 	* Publicly accessible internal build flag
 	*/
 	static const bool IS_INTERNAL;
+	
+	/**
+     * @brief Globally accessible Darwin kernel version numbers.
+     * Populated by PHTM::init().
+     */
+    static int darwinMajor;
+    static int darwinMinor;
 	
 	/**
 	* Struct to hold both process name and potential PID

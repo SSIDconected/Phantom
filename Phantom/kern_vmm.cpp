@@ -68,12 +68,12 @@ bool reRouteHvVmm(KernelPatcher &patcher) {
 
     // Ensure that sysctlChildrenAddress exists before continuing
     if (!PHTM::gSysctlChildrenAddr) {
-		DBGLOG(MODULE_ERROR, "Failed to resolve _sysctl__children passed to function reRouteHvVmm.");
-		panic(MODULE_RRHVM, "Failed to resolve _sysctl__children passed to function reRouteHvVmm");
+        DBGLOG(MODULE_ERROR, "Failed to resolve _sysctl__children passed to function reRouteHvVmm.");
+        panic(MODULE_RRHVM, "Failed to resolve _sysctl__children passed to function reRouteHvVmm");
         return false;
-	} else {
-		DBGLOG(MODULE_RRHVM, "Got address 0x%llx for _sysctl__children passed to function reRouteHvVmm.", PHTM::gSysctlChildrenAddr);
-	}
+    } else {
+        DBGLOG(MODULE_RRHVM, "Got address 0x%llx for _sysctl__children passed to function reRouteHvVmm.", PHTM::gSysctlChildrenAddr);
+    }
 
     // Case the address to sysctl_oid_list*
     sysctl_oid_list *sysctlChildren = reinterpret_cast<sysctl_oid_list *>(PHTM::gSysctlChildrenAddr);
@@ -81,7 +81,8 @@ bool reRouteHvVmm(KernelPatcher &patcher) {
     // traverse the sysctl tree to locate 'kern'
     sysctl_oid *kernNode = nullptr;
     SLIST_FOREACH(kernNode, sysctlChildren, oid_link) {
-        if (strcmp(kernNode->oid_name, "kern") == 0) {
+        // Add a null-check for oid_name as a good safety practice within the loop
+        if (kernNode && kernNode->oid_name && strcmp(kernNode->oid_name, "kern") == 0) {
             DBGLOG(MODULE_RRHVM, "Found 'kern' node.");
             break;
         }
@@ -93,11 +94,21 @@ bool reRouteHvVmm(KernelPatcher &patcher) {
         return false;
     }
 
-    // traverse 'kern' to find 'hv_vmm_present'
+    // --- SAFETY CHECKS ADDED ---
+    // Before traversing children, validate that the kern node is structured as we expect.
+    // 1. It must be a NODE type, indicating it's a parent in the tree.
+    // 2. The pointer to its children (oid_arg1) must not be null.
+    if (!(kernNode->oid_kind & CTLTYPE_NODE) || !kernNode->oid_arg1) {
+        DBGLOG(MODULE_ERROR, "'kern' sysctl OID is not a valid node or has no children. Cannot traverse.");
+        return false;
+    }
+    // --- END SAFETY CHECKS ---
+
+    // Now it's safe to traverse the children of 'kern'
     sysctl_oid_list *kernChildren = reinterpret_cast<sysctl_oid_list *>(kernNode->oid_arg1);
     sysctl_oid *vmmNode = nullptr;
     SLIST_FOREACH(vmmNode, kernChildren, oid_link) {
-        if (strcmp(vmmNode->oid_name, "hv_vmm_present") == 0) {
+        if (vmmNode && vmmNode->oid_name && strcmp(vmmNode->oid_name, "hv_vmm_present") == 0) {
             DBGLOG(MODULE_RRHVM, "Found 'hv_vmm_present' node.");
             break;
         }
@@ -109,25 +120,35 @@ bool reRouteHvVmm(KernelPatcher &patcher) {
         return false;
     }
 
-	// Check if the found vmmNode's handler is NULL, which might be unexpected.
+    // Check if the found vmmNode's handler is NULL, which might be unexpected.
     if (vmmNode->oid_handler == nullptr) {
         DBGLOG(MODULE_RRHVM, "Failed to save original 'hv_vmm_present' sysctl handler: The existing handler was NULL.");
         return false; // Return false as this is considered a failure condition.
     }
-	
-    // save the original handler in the global variable
-	VMM::originalHvVmmHandler = vmmNode->oid_handler;
+    
+    // Save the original handler
+    VMM::originalHvVmmHandler = vmmNode->oid_handler;
     DBGLOG(MODULE_RRHVM, "Successfully saved original 'hv_vmm_present' sysctl handler.");
-    
-    // ensure kernel r/w access
-    PANIC_COND(MachInfo::setKernelWriting(true, patcher.kernelWriteLock) != KERN_SUCCESS, MODULE_SHORT, "Failed to enable God mode. (Kernel R/W)");
-    
-    // reroute the handler to our custom function
+     
+	// On macOS Ventura (Darwin 22) and newer (?), we must disable kernel write protection.
+    // Not too sure when this began to be a requirement, but let's do it for Vent+ for now.
+	if (getKernelVersion() >= KernelVersion::Ventura) {
+        DBGLOG(MODULE_RRHVM, "Ventura or newer detected. Disabling kernel write protection...");
+        PANIC_COND(MachInfo::setKernelWriting(true, patcher.kernelWriteLock) != KERN_SUCCESS, MODULE_SHORT, "Failed to disable kernel write protection.");
+    }
+	
+    // Reroute the handler to our custom function.
     vmmNode->oid_handler = phtm_sysctl_vmm_present;
-    MachInfo::setKernelWriting(false, patcher.kernelWriteLock);
+	
+	// Re-enable kernel write protection if we disabled it.
+    if (getKernelVersion() >= KernelVersion::Ventura) {
+        DBGLOG(MODULE_RRHVM, "Re-enabling kernel write protection.");
+        MachInfo::setKernelWriting(false, patcher.kernelWriteLock);
+    }
+	
     DBGLOG(MODULE_RRHVM, "Successfully rerouted 'hv_vmm_present' sysctl handler.");
     return true;
-
+	
 }
 
 // Function for the VMM init routine

@@ -32,15 +32,15 @@ This was created by a legitimate player who also has spent too much money on ski
 
 | Release Name | Status | Notes |
 | --- | --- | --- |
-| Tahoe (26+) | <span style="color: #a80000;">Incomplete</span> | Waiting on Lilu update. |
+| Tahoe (26+) | <span style="color: #7afc4e;">Complete</span> | ALl Modules work. |
 | Sequoia (15+) | <span style="color: #7afc4e;">Complete</span> | All Modules work. |
 | Sonoma (14+) | <span style="color: #7afc4e;">Complete</span> | All Modules work. |
-| Ventura (13+) | <span style="color: #ffe985;">Work-In-Progress</span> | Untested. May Work. |
+| Ventura (13+) | <span style="color: #7afc4e;">Complete</span> | All Modules work. |
 | Monterey (12+) | <span style="color: #ffe985;">Work-In-Progress</span> | Untested. May Work. |
 | Big Sur (11+) | <span style="color: #ffe985;">Work-In-Progress</span> | Untested. May Work. |
-| Catalina (10.15+) | <span style="color: #ffe985;">Work-In-Progress</span> | Untested. May Work. |
+| Catalina (10.15+) | <span style="color: #7afc4e;">Complete</span> | No VMM Module, non existent. |
 | Mojave (10.14+) | <span style="color: #ffe985;">Work-In-Progress</span> | Untested. May Work. |
-| High Sierra (10.13+) | <span style="color: #a80000;">Incomplete</span> | Waiting on Internal Testing. |
+| High Sierra (10.13+) | <span style="color: #7afc4e;">Complete</span>| No VMM Module, non existent. |
 
 The currently Complete versions are the ones that we were able to internally test, and will continue to update this kernel extension in the upcoming following days, to ensure all versions of macOS that League of Legends can run on, is supported. Give us time to make sure things work internally first. If you'd like to help, please read further below and create an Issue with your testing environment and logs. Thanks for the patience.
 
@@ -69,9 +69,10 @@ Tipping/Donating is not required, but will greatly assist me with day to day lif
 **To use Phantom, you must be using [the latest version of Lilu](https://github.com/acidanthera/Lilu/releases) (atleast 1.7.0+ required) to properly load the plug-in.**
 
 1. Download the latest RELEASE or DEBUG from the Releases tab.
-2. Drag/Drop into your OpenCore's Kexts folder.
-3. Use ProperTree to OC Snapshot and add the kext to your config.plist
-4. Boot macOS, verify the kernel extension is loaded with ``kextstat``.
+2. Phanton requires a custom build of [WhateverGreen](https://github.com/Carnations-Botanica/WhateverGreen/actions/runs/15656846758) that does **NOT** conflict with Phantom's Modules.
+3. Drag/Drop into your OpenCore's Kexts folder.
+4. Use ProperTree to OC Snapshot and add the kext to your config.plist
+5. Boot macOS, verify the kernel extension is loaded with ``kextstat``.
 
 ### Features
 
@@ -96,11 +97,13 @@ Phantom will automatically reroute various kernel functions to our own custom fu
 
 If you find that you're running into issues that must be reported, or wish to contribute to the list of processes that should not be aware of being in an OpenCore-style environment you can follow the below information to better provide logs for us to improve the project with. Report these to the DarwinKVM discord server for now.
 
+Please ensure you have [DebugEnhancer](https://github.com/acidanthera/DebugEnhancer) to get better dmesg logs to provide.
+
 </br>
 <b>Example boot-args for <i>Developers/Contributors</i> (This is not required to use Phantom)</b>
 
 ```bash
--v debug=0x100 -liludbgall
+-v keepsyms=1 debug=0x100 msgbuf=1048576 -liludbgall
 ```
 
 </br>
