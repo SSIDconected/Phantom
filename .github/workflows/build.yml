@@ -1,0 +1,26 @@
+name: Build Phantom.kext
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-13
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install dependencies
+        run: |
+          brew install cmake
+          git clone https://github.com/acidanthera/MacKernelSDK.git
+          git clone --depth=1 https://github.com/acidanthera/Lilu.git
+
+      - name: Build kext
+        run: |
+          xcodebuild -project Phantom.xcodeproj -scheme Phantom -configuration Release
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: Phantom.kext
+          path: build/Release/Phantom.kext
