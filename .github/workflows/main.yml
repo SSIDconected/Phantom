@@ -20,7 +20,7 @@ jobs:
           xcodebuild -project Phantom.xcodeproj -scheme Phantom -configuration Release
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: Phantom.kext
           path: '**/Phantom.kext'
