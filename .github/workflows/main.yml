@@ -23,4 +23,4 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: Phantom.kext
-          path: build/Release/Phantom.kext
+          path: '**/Phantom.kext'
